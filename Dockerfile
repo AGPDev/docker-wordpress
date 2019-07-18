@@ -1,30 +1,38 @@
-FROM webdevops/base-app:alpine
+FROM alpine:3.10
 
 LABEL Maintainer="Anderson Guilherme Porto <hkrnew@gmail.com>" \
       Description="Lightweight container with Nginx 1.14 & PHP-FPM 7.3 based on Alpine Linux."
 
-ENV APPLICATION_PATH=/var/www/html \
-    FTP_USER=application \
-    FTP_PASSWORD=application \
-    FTP_UID=1000 \
-    FTP_GID=1000 \
-    FTP_PATH=/var/www/html \
-    WEB_DOCUMENT_ROOT=/var/www/html \
-    WEB_DOCUMENT_INDEX=index.php \
-    WEB_ALIAS_DOMAIN=*.vm \
-    WEB_PHP_TIMEOUT=600 \
-    WEB_PHP_SOCKET="127.0.0.1:9000" \ 
-    #WEB_PHP_SOCKET="/var/run/php-fpm.socket" \    
+ENV FTP_USER=wordpress \
+    FTP_PASS=wordpress \
+    FTP_UID=1001 \
+    FTP_GID=1001 \
+    PASV_ADDRESS=127.0.0.1 \
+    PASV_MIN=21100 \
+    PASV_MAX=21110 \
+    TZ=America/Sao_Paulo \
     WORDPRESS_DB_HOST=mysql \
     WORDPRESS_DB_NAME=wordpress \
     WORDPRESS_DB_USER=root \
     WORDPRESS_DB_PASSWORD=root
 
-COPY conf/ /opt/docker/
-COPY docker/ /
-
-RUN apk-install \
-        # Install tools
+RUN set -eux \ 
+    && apk update \
+    && apk upgrade \
+    && apk --update --no-cache add \
+        bash \
+        # build-base \
+        ca-certificates \
+        curl \
+        # linux-pam-dev \
+        openssl \
+        sed \
+        shadow \
+        supervisor \
+        tzdata \
+        unzip \
+        # vim \
+        vsftpd \
         imagemagick \
         graphicsmagick \
         ghostscript \
@@ -35,8 +43,6 @@ RUN apk-install \
         pngquant \
         # Install nginx
         nginx \
-        # Install vsftpd
-        vsftpd \
         # Install php (cli/fpm)
         php7-fpm \
         php7-json \
@@ -50,7 +56,7 @@ RUN apk-install \
         php7-mcrypt \
         php7-gd \
         # disabled until Imagick was compiled against Image Magick version 1799 but version 1800 is loaded is fixed
-        # php7-imagick \
+        php7-imagick \
         php7-imap \
         php7-bcmath \
         #php7-soap \
@@ -93,31 +99,43 @@ RUN apk-install \
         php7-fileinfo \
         php7-simplexml \
         php7-tokenizer \
-        php7-xmlwriter \
-    && ln -s /usr/sbin/php-fpm7 /usr/sbin/php-fpm \
-    && pecl channel-update pecl.php.net \
-    # Temporarily disable pear due to https://twitter.com/pear/status/1086634389465956352
-    # && pear channel-update pear.php.net \
-    # && pear upgrade-all \
-    && pear config-set auto_discover 1 \
-    # && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer \
-    # PECL workaround, see webdevops/Dockerfile#78
-    && sed -i "s/ -n / /" $(which pecl) \
-    # Enable vsftpd services
-    && ln -sf /opt/docker/etc/vsftpd/vsftpd.conf /etc/vsftpd.conf \
-    && mkdir -p \
-            /var/run/vsftpd/empty \
-            /var/log/supervisor \
-    # Enable php services
-    && docker-service enable syslog \
-    && docker-service enable cron \
-    && docker-run-bootstrap \
-    && docker-image-cleanup
+        php7-xmlwriter
 
-RUN curl -o wordpress.tar.gz -fSL "https://br.wordpress.org/wordpress-latest-pt_BR.tar.gz" \
-    && tar -xzf wordpress.tar.gz --strip 1 -C /var/www/html \
+# Configure nginx
+COPY config/nginx.conf /etc/nginx/nginx.conf.alter
+
+# Configure PHP-FPM
+COPY config/fpm-pool.conf /etc/php7/php-fpm.d/www.conf.alter
+COPY config/php.ini /etc/php7/conf.d/wordpress.ini
+
+# Configure Wordpress
+# COPY config/wordpress /home/www
+RUN set -eux \
+    && mkdir /home/www \
+    && curl -o wordpress.tar.gz -fSL "https://br.wordpress.org/wordpress-latest-pt_BR.tar.gz" \
+    && tar -xzf wordpress.tar.gz --strip 1 -C /home/www \
     && rm wordpress.tar.gz
 
-VOLUME /var/www/html
+COPY config/wp-config.php /home/www/wp-config.php
+COPY config/wp-secrets.php /home/www/wp-secrets.php.alter
 
-EXPOSE 20 21 80 443 12020 12021 12022 12023 12024 12025
+# Configure vsftpd
+COPY config/vsftpd.conf /etc/vsftpd/vsftpd.conf
+
+# Configure supervisor
+COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Configure entrypoint
+COPY config/entrypoint.sh /usr/sbin/entrypoint.sh
+
+RUN chmod +x /usr/sbin/entrypoint.sh
+
+VOLUME /home/www
+
+ENTRYPOINT [ "/usr/sbin/entrypoint.sh" ]
+
+WORKDIR /home/www
+
+EXPOSE 21 80 443 $PASV_MIN-$PASV_MAX
+
+CMD [ "/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf" ]

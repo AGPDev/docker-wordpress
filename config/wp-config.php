@@ -37,26 +37,6 @@ define('DB_CHARSET', 'utf8');
 /** The Database Collate type. Don't change this if in doubt. */
 define('DB_COLLATE', '');
 
-/**#@+
- * Authentication Unique Keys and Salts.
- *
- * Change these to different unique phrases!
- * You can generate these using the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}
- * You can change these at any point in time to invalidate all existing cookies. This will force all users to have to log in again.
- *
- * @since 2.6.0
- */
-define('AUTH_KEY',         'replace_auth_key');
-define('SECURE_AUTH_KEY',  'replace_secure_auth_key');
-define('LOGGED_IN_KEY',    'replace_logged_in_key');
-define('NONCE_KEY',        'replace_nonce_key');
-define('AUTH_SALT',        'replace_auth_salt');
-define('SECURE_AUTH_SALT', 'replace_secure_auth_salt');
-define('LOGGED_IN_SALT',   'replace_logged_in_salt');
-define('NONCE_SALT',       'replace_nonce_salt');
-
-/**#@-*/
-
 /**
  * WordPress Database Table prefix.
  *
@@ -94,4 +74,5 @@ if ( !defined('ABSPATH') )
         define('ABSPATH', dirname(__FILE__) . '/');
 
 /** Sets up WordPress vars and included files. */
+require_once(ABSPATH . 'wp-secrets.php');
 require_once(ABSPATH . 'wp-settings.php');

@@ -1,14 +1,17 @@
 main:
   image: agpdev/wordpress
-  environment:
+
+  environment: 
+    - FTP_USER=teste
+    - FTP_PASS=teste123
     - WORDPRESS_DB_HOST=192.168.1.119
     - WORDPRESS_DB_NAME=wordpress
-    - WORDPRESS_DB_PASSWORD=wordpress
     - WORDPRESS_DB_USER=wordpress
+    - WORDPRESS_DB_PASSWORD=wordpress
 
   ports:
+    - "21100:21"
     - "8000:80"
-    - "8443:443"
     
   # volumes:
   #   - "./sandbox/code:/var/www/html/"
