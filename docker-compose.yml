@@ -1,0 +1,14 @@
+main:
+  image: agpdev/wordpress
+  environment:
+    - WORDPRESS_DB_HOST=192.168.1.119
+    - WORDPRESS_DB_NAME=wordpress
+    - WORDPRESS_DB_PASSWORD=wordpress
+    - WORDPRESS_DB_USER=wordpress
+
+  ports:
+    - "8000:80"
+    - "8443:443"
+    
+  # volumes:
+  #   - "./sandbox/code:/var/www/html/"
