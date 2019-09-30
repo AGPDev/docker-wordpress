@@ -1,7 +1,7 @@
 FROM alpine:3.10
 
 LABEL Maintainer="Anderson Guilherme Porto <hkrnew@gmail.com>" \
-      Description="Lightweight container with Nginx 1.14 & PHP-FPM 7.3 based on Alpine Linux."
+      Description="Lightweight container with Nginx 1.16 & PHP-FPM 7.3 based on Alpine Linux."
 
 ENV FTP_USER=wordpress \
     FTP_PASS=wordpress \
@@ -16,7 +16,7 @@ ENV FTP_USER=wordpress \
     WORDPRESS_DB_USER=root \
     WORDPRESS_DB_PASSWORD=root
 
-RUN set -eux \ 
+RUN set -eux \
     && apk update \
     && apk upgrade \
     && apk --update --no-cache add \
