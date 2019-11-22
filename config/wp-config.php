@@ -60,6 +60,10 @@ $table_prefix  = 'wp_';
 define('WP_DEBUG', false);
 
 define('FS_METHOD', 'direct');
+define('WP_MEMORY_LIMIT', '256M');
+define('IMAGE_EDIT_OVERWRITE', true);
+define('FORCE_SSL_ADMIN', true);
+define('WP_ALLOW_REPAIR', true);
 
 // If we're behind a proxy server and using HTTPS, we need to alert Wordpress of that fact
 // see also http://codex.wordpress.org/Administration_Over_SSL#Using_a_Reverse_Proxy
